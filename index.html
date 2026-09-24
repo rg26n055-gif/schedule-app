@@ -260,6 +260,26 @@
       }
     }
     createCards();
+    window.addEventListener(
+  "eventLoaded",
+  event => {
+
+    console.log(
+      "index.htmlでイベント受信:",
+      event.detail
+    );
+
+    console.log(
+      "開始日:",
+      event.detail.startDate
+    );
+
+    console.log(
+      "終了日:",
+      event.detail.endDate
+    );
+  }
+);
   </script>
   <script type="module" src="./event.js"></script>
 </body>

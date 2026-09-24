@@ -38,16 +38,26 @@ async function loadEvent() {
     }
 
     const data =
-      snapshot.data();
+  snapshot.data();
 
-    eventInfo.textContent =
-      `${data.title}｜${data.startDate} 〜 ${data.endDate}`;
+eventInfo.textContent =
+  `${data.title}｜${data.startDate} 〜 ${data.endDate}`;
 
-    console.log(
-      "イベント読み込み成功:",
-      data
-    );
+window.dispatchEvent(
+  new CustomEvent("eventLoaded", {
+    detail: {
+      id: eventId,
+      title: data.title,
+      startDate: data.startDate,
+      endDate: data.endDate
+    }
+  })
+);
 
+console.log(
+  "イベント読み込み成功:",
+  data
+);
   } catch (error) {
 
     console.error(
