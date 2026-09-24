@@ -4,6 +4,11 @@ import {
   getFirestore
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
+import {
+  getAuth,
+  GoogleAuthProvider
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyB_5Nag4DsiRZedzMF5LL6sOCVyMgTaWbU",
   authDomain: "smart-schedule-coordinat-79ae1.firebaseapp.com",
@@ -16,5 +21,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
+
+export const auth = getAuth(app);
+
+export const provider =
+  new GoogleAuthProvider();
 
 console.log("Firebase connected");
