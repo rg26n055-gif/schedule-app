@@ -83,6 +83,7 @@
 // const START_DAY = 1;
 // const END_DAY = 15;
 let eventDates = [];
+let currentEventOpen = true;
     const START_HOUR = 9;
     const END_HOUR = 22;
     const periods = [
@@ -341,6 +342,13 @@ let eventDates = [];
   const status =
     document.getElementById("status");
 
+  if (!currentEventOpen) {
+    status.textContent =
+      "このイベントの回答受付は終了しています。";
+
+    return;
+  }
+
   const button =
     document.getElementById("submitButton");
 
@@ -407,12 +415,29 @@ let eventDates = [];
     currentEventId =
       event.detail.id;
 
+    currentEventOpen =
+      event.detail.isOpen;
+
     const dates = makeDateList(
       event.detail.startDate,
       event.detail.endDate
     );
 
     eventDates = dates;
+
+    const submitButton =
+      document.getElementById("submitButton");
+
+    const status =
+      document.getElementById("status");
+
+    if (event.detail.isOpen === false) {
+      submitButton.disabled = true;
+      submitButton.textContent =
+        "回答受付終了";
+      status.textContent =
+        "このイベントの回答受付は終了しました。";
+    }
 
     createCards();
   }

@@ -49,7 +49,8 @@ window.dispatchEvent(
       id: eventId,
       title: data.title,
       startDate: data.startDate,
-      endDate: data.endDate
+      endDate: data.endDate,
+      isOpen: data.isOpen !== false
     }
   })
 );
