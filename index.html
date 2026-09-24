@@ -243,6 +243,47 @@
       status.textContent = message;
       setTimeout(() => { if (status.textContent === message) status.textContent = ''; }, 2200);
     }
+    function makeDateList(startDate, endDate) {
+
+  const startParts = startDate.split("-").map(Number);
+  const endParts = endDate.split("-").map(Number);
+
+  const current = new Date(Date.UTC(
+    startParts[0],
+    startParts[1] - 1,
+    startParts[2]
+  ));
+
+  const end = new Date(Date.UTC(
+    endParts[0],
+    endParts[1] - 1,
+    endParts[2]
+  ));
+
+  const dates = [];
+
+  while (current <= end) {
+
+    const year = current.getUTCFullYear();
+    const month = current.getUTCMonth() + 1;
+    const day = current.getUTCDate();
+
+    dates.push({
+      year,
+      month,
+      day,
+      key:
+        `${year}-${String(month).padStart(2, "0")}-` +
+        `${String(day).padStart(2, "0")}`
+    });
+
+    current.setUTCDate(
+      current.getUTCDate() + 1
+    );
+  }
+
+  return dates;
+}
     function submitForm() {
       const name = document.getElementById('name').value.trim();
       const status = document.getElementById('status');
@@ -269,14 +310,14 @@
       event.detail
     );
 
-    console.log(
-      "開始日:",
-      event.detail.startDate
+    const dates = makeDateList(
+      event.detail.startDate,
+      event.detail.endDate
     );
 
     console.log(
-      "終了日:",
-      event.detail.endDate
+      "生成された日付:",
+      dates
     );
   }
 );
