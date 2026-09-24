@@ -83,6 +83,12 @@
 
     <p id="openStatus"></p>
 
+    <button id="deleteEventButton">
+      このイベントを完全に削除
+    </button>
+
+    <p id="deleteStatus"></p>
+
     <p id="status">
       回答を読み込み中...
     </p>
@@ -114,7 +120,9 @@
       getDoc,
       collection,
       getDocs,
-      updateDoc
+      updateDoc,
+      deleteDoc,
+      writeBatch
     } from
     "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -174,6 +182,12 @@
 
     const openStatus =
       document.getElementById("openStatus");
+
+    const deleteEventButton =
+      document.getElementById("deleteEventButton");
+
+    const deleteStatus =
+      document.getElementById("deleteStatus");
 
 
 
@@ -256,6 +270,96 @@
 
             return;
           }
+
+          deleteEventButton.addEventListener(
+            "click",
+            async () => {
+              const confirmed =
+                window.confirm(
+                  "このイベントと全回答を完全に削除します。\nこの操作は元に戻せません。\n本当に削除しますか？"
+                );
+
+              if (!confirmed) {
+                return;
+              }
+
+              deleteEventButton.disabled = true;
+              deleteStatus.textContent =
+                "削除中...";
+
+              try {
+                // -------------------------
+                // 回答を全部取得
+                // -------------------------
+
+                const responsesRef =
+                  collection(
+                    db,
+                    "events",
+                    eventId,
+                    "responses"
+                  );
+
+                const snapshot =
+                  await getDocs(
+                    responsesRef
+                  );
+
+                // -------------------------
+                // 一括削除
+                // -------------------------
+
+                const batch =
+                  writeBatch(db);
+
+                snapshot.forEach(
+                  responseDoc => {
+                    batch.delete(
+                      responseDoc.ref
+                    );
+                  }
+                );
+
+                // 最後にイベント本体も削除
+                batch.delete(
+                  doc(
+                    db,
+                    "events",
+                    eventId
+                  )
+                );
+
+                await batch.commit();
+
+                deleteStatus.textContent =
+                  "イベントと回答データを削除しました。";
+
+                console.log(
+                  "イベント完全削除成功"
+                );
+
+                // 少し待ってから作成画面へ
+                setTimeout(
+                  () => {
+                    window.location.href =
+                      "./create.html";
+                  },
+                  1500
+                );
+              } catch (error) {
+                console.error(
+                  "削除エラー:",
+                  error
+                );
+
+                deleteStatus.textContent =
+                  "削除に失敗しました。";
+
+                deleteEventButton.disabled =
+                  false;
+              }
+            }
+          );
 
           function updateOpenDisplay() {
             if (isOpen) {
