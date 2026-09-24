@@ -13,3 +13,14 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 console.log("Firebase connected");
+
+async function testWrite() {
+  const docRef = await addDoc(collection(db, "test"), {
+    message: "Hello Firestore",
+    createdAt: serverTimestamp()
+  });
+
+  console.log("保存成功:", docRef.id);
+}
+
+testWrite();
