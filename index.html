@@ -330,52 +330,95 @@ let eventDates = [];
 
   return dates;
 }
-    function submitForm() {
-      const name = document.getElementById('name').value.trim();
-      const status = document.getElementById('status');
-      const button = document.getElementById('submitButton');
-      if (!name) { status.textContent = '名前を入力してください。'; return; }
-      button.disabled = true;
-      button.textContent = '送信中…';
-      const response = { name, env: state.env, eng: state.eng, online: state.online };
-      if (window.google && google.script && google.script.run) {
-        google.script.run.withSuccessHandler(() => { status.textContent = '送信しました！ありがとうございます。'; button.textContent = '送信済み'; }).withFailureHandler(error => { status.textContent = `送信に失敗しました：${error.message}`; button.disabled = false; button.textContent = '回答を送信'; }).saveResponse(response);
-      } else {
-        localStorage.setItem('dance-schedule-response', JSON.stringify(response));
-        status.textContent = '回答を保存しました。ありがとうございます。';
-        button.textContent = '保存済み';
-      }
-    }
+    async function submitForm() {
+
+  const name =
+    document
+      .getElementById("name")
+      .value
+      .trim();
+
+  const status =
+    document.getElementById("status");
+
+  const button =
+    document.getElementById("submitButton");
+
+  if (!name) {
+    status.textContent =
+      "名前を入力してください。";
+    return;
+  }
+
+  if (!currentEventId) {
+    status.textContent =
+      "イベント情報を読み込めていません。";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "送信中…";
+  status.textContent = "";
+
+  try {
+
+    const responseId =
+      await window.saveResponseToFirestore(
+        currentEventId,
+        {
+          name: name,
+          env: state.env,
+          eng: state.eng,
+          online: state.online
+        }
+      );
+
+    console.log(
+      "回答保存成功:",
+      responseId
+    );
+
+    status.textContent =
+      "送信しました！ありがとうございます。";
+
+    button.textContent =
+      "送信済み";
+
+  } catch (error) {
+
+    console.error(
+      "回答保存エラー:",
+      error
+    );
+
+    status.textContent =
+      "送信に失敗しました。";
+
+    button.disabled = false;
+    button.textContent =
+      "回答を送信";
+  }
+}
     // createCards();
     window.addEventListener(
   "eventLoaded",
   event => {
-　document.getElementById("pageTitle").textContent =
-  `${event.detail.title} 日程調整`;
 
-document.getElementById("dateRangeText").textContent =
-  `${event.detail.startDate}〜${event.detail.endDate}`;
-    console.log(
-      "index.htmlでイベント受信:",
-      event.detail
-    );
+    currentEventId =
+      event.detail.id;
 
     const dates = makeDateList(
-  event.detail.startDate,
-  event.detail.endDate
-);
-
-eventDates = dates;
-
-    console.log(
-      "生成された日付:",
-      eventDates
+      event.detail.startDate,
+      event.detail.endDate
     );
+
+    eventDates = dates;
 
     createCards();
   }
 );
   </script>
   <script type="module" src="./event.js"></script>
+<script type="module" src="./response.js"></script>
 </body>
 </html>
