@@ -56,7 +56,9 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>ダンス練習 日程調整</h1>
+    <h1 id="pageTitle">
+日程調整
+</h1>
     <p id="eventInfo">
   イベント情報を読み込み中…
 </p>
@@ -65,7 +67,7 @@
       まずは、<b>「普段この曜日・時間帯なら参加できそう？」</b>という感覚でざっくり回答してください。<br><br>
       <b>○ 参加できそう</b><br><b>× 絶対に無理</b><br><b>？ まだ分からない</b><br><br>
       まだ分からないところは、<b>「？」のままでOK</b>です。<br>
-      曜日ごとの回答を10月1日〜15日の実際の日付に自動で反映します。<br><br>
+      曜日ごとの回答を<span id="dateRangeText"></span>の実際の日付に自動で反映します。<br><br>
       「10月8日だけ予定がある」など、特定の日だけ違う場合は、<b>「特定の日だけ細かく修正する」</b>から変更できます。
     </div>
 
@@ -348,7 +350,11 @@ let eventDates = [];
     window.addEventListener(
   "eventLoaded",
   event => {
+　document.getElementById("pageTitle").textContent =
+  `${event.detail.title} 日程調整`;
 
+document.getElementById("dateRangeText").textContent =
+  `${event.detail.startDate}〜${event.detail.endDate}`;
     console.log(
       "index.htmlでイベント受信:",
       event.detail
