@@ -86,10 +86,9 @@ const docRef = await addDoc(collection(db, "events"), {
   startDate,
   endDate,
   ownerId: auth.currentUser.uid,
-  ownerName: auth.currentUser.displayName || "",
+  isOpen: true,
   createdAt: serverTimestamp()
-});
-      const eventUrl =
+});      const eventUrl =
         `${window.location.origin}/index.html?event=${docRef.id}`;
 
       status.innerHTML = `

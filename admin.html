@@ -77,6 +77,12 @@
 
     <p id="eventPeriod"></p>
 
+    <button id="toggleOpenButton">
+      回答を締め切る
+    </button>
+
+    <p id="openStatus"></p>
+
     <p id="status">
       回答を読み込み中...
     </p>
@@ -107,7 +113,8 @@
       doc,
       getDoc,
       collection,
-      getDocs
+      getDocs,
+      updateDoc
     } from
     "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -161,6 +168,12 @@
       document.getElementById(
         "responseNames"
       );
+
+    const toggleOpenButton =
+      document.getElementById("toggleOpenButton");
+
+    const openStatus =
+      document.getElementById("openStatus");
 
 
 
@@ -225,6 +238,9 @@
           const eventData =
             eventSnapshot.data();
 
+          let isOpen =
+            eventData.isOpen !== false;
+
 
           // ===============================
           // 管理者本人か確認
@@ -240,6 +256,56 @@
 
             return;
           }
+
+          function updateOpenDisplay() {
+            if (isOpen) {
+              openStatus.textContent =
+                "現在：回答受付中";
+
+              toggleOpenButton.textContent =
+                "回答を締め切る";
+            } else {
+              openStatus.textContent =
+                "現在：締切済み";
+
+              toggleOpenButton.textContent =
+                "回答受付を再開する";
+            }
+          }
+
+          updateOpenDisplay();
+
+          toggleOpenButton.addEventListener(
+            "click",
+            async () => {
+              try {
+                const newValue =
+                  !isOpen;
+
+                await updateDoc(
+                  eventRef,
+                  {
+                    isOpen: newValue
+                  }
+                );
+
+                isOpen =
+                  newValue;
+
+                updateOpenDisplay();
+
+                console.log(
+                  "受付状態変更:",
+                  isOpen
+                );
+              } catch (error) {
+                console.error(
+                  "受付状態変更エラー:",
+                  error
+                );
+              }
+            }
+          );
 
 
           eventTitle.textContent =
