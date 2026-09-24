@@ -35,7 +35,10 @@
   <p id="status"></p>
 
   <script type="module">
-  import { db } from "./firebase.js";
+  import {
+    db,
+    auth
+  } from "./firebase.js";
 
   import {
     collection,
@@ -43,8 +46,24 @@
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
+  import {
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
   const button = document.getElementById("createButton");
   const status = document.getElementById("status");
+
+  onAuthStateChanged(auth, user => {
+    if (!user) {
+      status.textContent =
+        "管理者ログインが必要です。";
+      button.disabled = true;
+    } else {
+      status.textContent =
+        `ログイン中：${user.displayName}`;
+      button.disabled = false;
+    }
+  });
 
   button.addEventListener("click", async () => {
     const title = document.getElementById("title").value.trim();
@@ -57,13 +76,19 @@
     }
 
     try {
-      const docRef = await addDoc(collection(db, "events"), {
-        title,
-        startDate,
-        endDate,
-        createdAt: serverTimestamp()
-      });
+      if (!auth.currentUser) {
+  status.textContent = "先にログインしてください。";
+  return;
+}
 
+const docRef = await addDoc(collection(db, "events"), {
+  title,
+  startDate,
+  endDate,
+  ownerId: auth.currentUser.uid,
+  ownerName: auth.currentUser.displayName || "",
+  createdAt: serverTimestamp()
+});
       const eventUrl =
         `${window.location.origin}/index.html?event=${docRef.id}`;
 
