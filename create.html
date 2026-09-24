@@ -89,7 +89,10 @@ const docRef = await addDoc(collection(db, "events"), {
   isOpen: true,
   createdAt: serverTimestamp()
 });      const eventUrl =
-        `${window.location.origin}/index.html?event=${docRef.id}`;
+  new URL(
+    `./index.html?event=${docRef.id}`,
+    window.location.href
+  ).href;
 
       status.innerHTML = `
         作成成功！<br>
