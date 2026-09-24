@@ -92,13 +92,9 @@ let currentEventOpen = true;
       { id: 'night', name: '夜', text: '17〜22時', start: 17, end: 22 }
     ];
     const weekdays = [{ id: 1, name: '月' }, { id: 2, name: '火' }, { id: 3, name: '水' }, { id: 4, name: '木' }, { id: 5, name: '金' }, { id: 6, name: '土' }, { id: 0, name: '日' }];
-    const groups = [
-      { id: 'env', title: '① もし環境人間キャンパスでダンス練習をやる場合' },
-      { id: 'eng', title: '② もし姫路工学キャンパスでダンス練習をやる場合' },
-      { id: 'online', title: '③ もしオンラインでダンス練習をやる場合' }
-    ];
-    const state = { env: {}, eng: {}, online: {} };
-    const simpleState = { env: {}, eng: {}, online: {} };
+    let groups = [];
+    const state = {};
+    const simpleState = {};
     let drag = { active: false, group: null, value: null, last: null };
     const pad = number => String(number).padStart(2, '0');
     const keyFor = (day, hour) => `${YEAR}-${pad(MONTH)}-${pad(day)} ${pad(hour)}:00〜${pad(hour + 1)}:00`;
@@ -107,6 +103,7 @@ let currentEventOpen = true;
 
     function createCards() {
       const root = document.getElementById('cards');
+      root.innerHTML = '';
       groups.forEach((group, index) => {
         simpleState[group.id] = {};
         weekdays.forEach(weekday => periods.forEach(period => { simpleState[group.id][`${weekday.id}_${period.id}`] = 'maybe'; }));
@@ -274,11 +271,12 @@ let currentEventOpen = true;
     }
 
     function copyFromEnv(target) {
-      Object.keys(simpleState.env).forEach(key => { simpleState[target][key] = simpleState.env[key]; });
+      const sourceGroup = groups[0];
+      Object.keys(simpleState[sourceGroup.id]).forEach(key => { simpleState[target][key] = simpleState[sourceGroup.id][key]; });
       document.querySelectorAll(`#${target}Simple .simple-button`).forEach(button => updateSimpleButton(button, simpleState[target][`${button.dataset.weekday}_${button.dataset.period}`]));
-      Object.keys(state.env).forEach(key => {
+      Object.keys(state[sourceGroup.id]).forEach(key => {
         const cell = document.querySelector(`.slot[data-group="${target}"][data-key="${key}"]`);
-        if (cell) applyState(cell, state.env[key]);
+        if (cell) applyState(cell, state[sourceGroup.id][key]);
       });
       showMessage('①の回答をコピーしました。');
     }
@@ -459,6 +457,16 @@ function updateDynamicDateText(startDate, endDate) {
     );
 
     eventDates = dates;
+
+    groups = (event.detail.questions || []).map(
+      (question, index) => ({
+        id: question.id || `question${index + 1}`,
+        title: `${index + 1}. ${question.title}`
+      })
+    );
+
+    Object.keys(state).forEach(key => delete state[key]);
+    Object.keys(simpleState).forEach(key => delete simpleState[key]);
 
     const submitButton =
       document.getElementById("submitButton");

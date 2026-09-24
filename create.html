@@ -30,6 +30,15 @@
 
   <br><br>
 
+  <label>
+    質問項目（1行に1つ）<br>
+    <textarea id="questions" rows="5">環境人間キャンパスでダンス練習
+姫路工学キャンパスでダンス練習
+オンラインでダンス練習</textarea>
+  </label>
+
+  <br><br>
+
   <button id="createButton">イベントを作成</button>
 
   <p id="status"></p>
@@ -69,11 +78,20 @@
     const title = document.getElementById("title").value.trim();
     const startDate = document.getElementById("startDate").value;
     const endDate = document.getElementById("endDate").value;
+    const questionTitles = document.getElementById("questions").value
+      .split("\n")
+      .map(question => question.trim())
+      .filter(Boolean);
 
-    if (!title || !startDate || !endDate) {
+    if (!title || !startDate || !endDate || questionTitles.length === 0) {
       status.textContent = "全部入力してください";
       return;
     }
+
+    const questions = questionTitles.map((question, index) => ({
+      id: `question${index + 1}`,
+      title: question
+    }));
 
     try {
       if (!auth.currentUser) {
@@ -87,6 +105,7 @@ const docRef = await addDoc(collection(db, "events"), {
   endDate,
   ownerId: auth.currentUser.uid,
   isOpen: true,
+  questions,
   createdAt: serverTimestamp()
 });      const eventUrl =
   new URL(

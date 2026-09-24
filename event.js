@@ -12,6 +12,21 @@ const eventId = params.get("event");
 const eventInfo =
   document.getElementById("eventInfo");
 
+const defaultQuestions = [
+  {
+    id: "env",
+    title: "環境人間キャンパスでダンス練習"
+  },
+  {
+    id: "eng",
+    title: "姫路工学キャンパスでダンス練習"
+  },
+  {
+    id: "online",
+    title: "オンラインでダンス練習"
+  }
+];
+
 async function loadEvent() {
 
   if (!eventId) {
@@ -50,7 +65,10 @@ window.dispatchEvent(
       title: data.title,
       startDate: data.startDate,
       endDate: data.endDate,
-      isOpen: data.isOpen !== false
+      isOpen: data.isOpen !== false,
+      questions: data.questions?.length
+        ? data.questions
+        : defaultQuestions
     }
   })
 );
