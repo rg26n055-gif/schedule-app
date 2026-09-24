@@ -3,17 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>管理者画面</title>
+
+  <style>
+    body {
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans JP",
+        sans-serif;
+
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f6f7fb;
+      color: #222;
+    }
+
+    h1,
+    h2 {
+      margin-top: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      margin: 16px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #f3f4f6;
+    }
+
+    .top {
+      font-weight: bold;
+    }
+
+    .good {
+      background: #dcfce7;
+    }
+
+    .responses {
+      margin-top: 30px;
+    }
+  </style>
 </head>
+
 <body>
 
   <h1>管理者画面</h1>
 
-  <p id="status">読み込み中...</p>
+  <div class="card">
+    <h2 id="eventTitle">
+      イベント読み込み中...
+    </h2>
 
-  <h2 id="eventTitle"></h2>
+    <p id="eventPeriod"></p>
 
-  <div id="responses"></div>
+    <p id="status">
+      回答を読み込み中...
+    </p>
+  </div>
+
+
+  <div id="rankingArea"></div>
+
+
+  <div class="responses">
+
+    <h2>回答者一覧</h2>
+
+    <div id="responseNames"></div>
+
+  </div>
+
 
   <script type="module">
 
@@ -22,16 +102,26 @@
       auth
     } from "./firebase.js";
 
+
     import {
       doc,
       getDoc,
       collection,
       getDocs
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    } from
+    "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
 
     import {
       onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    } from
+    "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+
+
+    // ===============================
+    // URLからイベントID取得
+    // ===============================
 
     const params =
       new URLSearchParams(
@@ -41,18 +131,46 @@
     const eventId =
       params.get("event");
 
-    const status =
-      document.getElementById("status");
+
+
+    // ===============================
+    // HTML
+    // ===============================
 
     const eventTitle =
-      document.getElementById("eventTitle");
+      document.getElementById(
+        "eventTitle"
+      );
 
-    const responses =
-      document.getElementById("responses");
+    const eventPeriod =
+      document.getElementById(
+        "eventPeriod"
+      );
 
+    const status =
+      document.getElementById(
+        "status"
+      );
+
+    const rankingArea =
+      document.getElementById(
+        "rankingArea"
+      );
+
+    const responseNames =
+      document.getElementById(
+        "responseNames"
+      );
+
+
+
+    // ===============================
+    // ログイン確認
+    // ===============================
 
     onAuthStateChanged(
       auth,
+
       async user => {
 
         if (!user) {
@@ -63,6 +181,7 @@
           return;
         }
 
+
         if (!eventId) {
 
           status.textContent =
@@ -71,7 +190,12 @@
           return;
         }
 
+
         try {
+
+          // ===============================
+          // イベント取得
+          // ===============================
 
           const eventRef =
             doc(
@@ -80,12 +204,16 @@
               eventId
             );
 
+
           const eventSnapshot =
             await getDoc(
               eventRef
             );
 
-          if (!eventSnapshot.exists()) {
+
+          if (
+            !eventSnapshot.exists()
+          ) {
 
             status.textContent =
               "イベントが見つかりません。";
@@ -93,8 +221,14 @@
             return;
           }
 
+
           const eventData =
             eventSnapshot.data();
+
+
+          // ===============================
+          // 管理者本人か確認
+          // ===============================
 
           if (
             eventData.ownerId !==
@@ -107,8 +241,19 @@
             return;
           }
 
+
           eventTitle.textContent =
             eventData.title;
+
+
+          eventPeriod.textContent =
+            `${eventData.startDate} 〜 ${eventData.endDate}`;
+
+
+
+          // ===============================
+          // 回答取得
+          // ===============================
 
           const responsesRef =
             collection(
@@ -118,40 +263,127 @@
               "responses"
             );
 
+
           const responseSnapshot =
             await getDocs(
               responsesRef
             );
 
-          responses.innerHTML = "";
+
+          const responses = [];
+
 
           responseSnapshot.forEach(
             documentSnapshot => {
 
-              const data =
-                documentSnapshot.data();
+              responses.push({
+                id:
+                  documentSnapshot.id,
+
+                ...documentSnapshot.data()
+              });
+
+            }
+          );
+
+
+          status.textContent =
+            `回答者数：${responses.length}人`;
+
+
+
+          // ===============================
+          // 回答者一覧
+          // ===============================
+
+          responseNames.innerHTML = "";
+
+
+          responses.forEach(
+            response => {
 
               const div =
                 document.createElement(
                   "div"
                 );
 
-              div.innerHTML = `
-                <hr>
-                <strong>${escapeHtml(data.name || "")}</strong>
-                <br>
-                回答ID：
-                ${documentSnapshot.id}
-              `;
 
-              responses.appendChild(
+              div.textContent =
+                response.name ||
+                "名前なし";
+
+
+              responseNames.appendChild(
                 div
               );
+
             }
           );
 
-          status.textContent =
-            `回答者数：${responseSnapshot.size}人`;
+
+
+          // ===============================
+          // 日時一覧生成
+          // ===============================
+
+          const slots =
+            makeSlots(
+              eventData.startDate,
+              eventData.endDate
+            );
+
+
+
+          // ===============================
+          // 3種類を集計
+          // ===============================
+
+          const groups = [
+
+            {
+              id: "env",
+              title:
+                "① 環境人間キャンパス"
+            },
+
+            {
+              id: "eng",
+              title:
+                "② 姫路工学キャンパス"
+            },
+
+            {
+              id: "online",
+              title:
+                "③ オンライン"
+            }
+
+          ];
+
+
+          rankingArea.innerHTML = "";
+
+
+          groups.forEach(
+            group => {
+
+              const ranking =
+                calculateRanking(
+                  responses,
+                  group.id,
+                  slots
+                );
+
+
+              renderRanking(
+                group.title,
+                ranking,
+                responses.length
+              );
+
+            }
+          );
+
 
         } catch (error) {
 
@@ -160,22 +392,505 @@
             error
           );
 
+
           status.textContent =
             "データを読み込めませんでした。";
+
         }
+
       }
     );
 
 
-    function escapeHtml(text) {
+
+    // ===============================
+    // 日付 → 時間枠
+    // ===============================
+
+    function makeSlots(
+      startDate,
+      endDate
+    ) {
+
+      const startParts =
+        startDate
+          .split("-")
+          .map(Number);
+
+
+      const endParts =
+        endDate
+          .split("-")
+          .map(Number);
+
+
+      const current =
+        new Date(
+          Date.UTC(
+            startParts[0],
+            startParts[1] - 1,
+            startParts[2]
+          )
+        );
+
+
+      const end =
+        new Date(
+          Date.UTC(
+            endParts[0],
+            endParts[1] - 1,
+            endParts[2]
+          )
+        );
+
+
+      const slots = [];
+
+
+      while (
+        current <= end
+      ) {
+
+        const year =
+          current.getUTCFullYear();
+
+
+        const month =
+          String(
+            current.getUTCMonth() + 1
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        const day =
+          String(
+            current.getUTCDate()
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        const dateKey =
+          `${year}-${month}-${day}`;
+
+
+        for (
+          let hour = 9;
+          hour < 22;
+          hour++
+        ) {
+
+          const startHour =
+            String(hour)
+              .padStart(
+                2,
+                "0"
+              );
+
+
+          const endHour =
+            String(hour + 1)
+              .padStart(
+                2,
+                "0"
+              );
+
+
+          slots.push(
+            `${dateKey} ` +
+            `${startHour}:00〜${endHour}:00`
+          );
+
+        }
+
+
+        current.setUTCDate(
+          current.getUTCDate() + 1
+        );
+
+      }
+
+
+      return slots;
+    }
+
+
+
+    // ===============================
+    // 集計
+    // ===============================
+
+    function calculateRanking(
+      responses,
+      group,
+      slots
+    ) {
+
+      const ranking =
+        slots.map(
+          slot => {
+
+            let yes = 0;
+            let no = 0;
+            let maybe = 0;
+
+
+            responses.forEach(
+              response => {
+
+                const groupData =
+                  response[group] ||
+                  {};
+
+
+                const answer =
+                  groupData[slot] ||
+                  "maybe";
+
+
+                if (
+                  answer === "yes"
+                ) {
+
+                  yes++;
+
+                }
+
+                else if (
+                  answer === "no"
+                ) {
+
+                  no++;
+
+                }
+
+                else {
+
+                  maybe++;
+
+                }
+
+              }
+            );
+
+
+            // 元アプリと同じ評価方式
+            const score =
+              yes * 3
+              +
+              maybe * 0.5
+              -
+              no * 4;
+
+
+            return {
+              slot,
+              yes,
+              no,
+              maybe,
+              score
+            };
+
+          }
+        );
+
+
+      ranking.sort(
+        (a, b) => {
+
+          if (
+            b.score !==
+            a.score
+          ) {
+
+            return (
+              b.score -
+              a.score
+            );
+
+          }
+
+
+          if (
+            b.yes !==
+            a.yes
+          ) {
+
+            return (
+              b.yes -
+              a.yes
+            );
+
+          }
+
+
+          if (
+            a.no !==
+            b.no
+          ) {
+
+            return (
+              a.no -
+              b.no
+            );
+
+          }
+
+
+          return (
+            a.slot.localeCompare(
+              b.slot
+            )
+          );
+
+        }
+      );
+
+
+      return ranking;
+    }
+
+
+
+    // ===============================
+    // 表示
+    // ===============================
+
+    function renderRanking(
+      title,
+      ranking,
+      total
+    ) {
+
+      const section =
+        document.createElement(
+          "section"
+        );
+
+
+      const heading =
+        document.createElement(
+          "h2"
+        );
+
+
+      heading.textContent =
+        title;
+
+
+      section.appendChild(
+        heading
+      );
+
+
+      const table =
+        document.createElement(
+          "table"
+        );
+
+
+      table.innerHTML = `
+        <thead>
+
+          <tr>
+
+            <th>順位</th>
+
+            <th>日時</th>
+
+            <th>○</th>
+
+            <th>×</th>
+
+            <th>？</th>
+
+            <th>スコア</th>
+
+            <th>評価</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody></tbody>
+      `;
+
+
+      const tbody =
+        table.querySelector(
+          "tbody"
+        );
+
+
+      ranking
+        .slice(
+          0,
+          10
+        )
+        .forEach(
+          (item, index) => {
+
+            const row =
+              document.createElement(
+                "tr"
+              );
+
+
+            if (
+              index < 3
+            ) {
+
+              row.classList.add(
+                "top"
+              );
+
+            }
+
+
+            if (
+              item.no === 0 &&
+              item.yes === total &&
+              total > 0
+            ) {
+
+              row.classList.add(
+                "good"
+              );
+
+            }
+
+
+            let comment = "";
+
+
+            if (
+              total === 0
+            ) {
+
+              comment =
+                "回答なし";
+
+            }
+
+            else if (
+              item.no === 0 &&
+              item.yes === total
+            ) {
+
+              comment =
+                "全員○！";
+
+            }
+
+            else if (
+              item.no === 0 &&
+              item.yes >=
+                total * 0.7
+            ) {
+
+              comment =
+                "×なし・有力";
+
+            }
+
+            else if (
+              item.no === 0
+            ) {
+
+              comment =
+                "×なし";
+
+            }
+
+            else if (
+              item.no === 1
+            ) {
+
+              comment =
+                "×1人";
+
+            }
+
+            else {
+
+              comment =
+                `×${item.no}人`;
+
+            }
+
+
+            row.innerHTML = `
+              <td>
+                ${index + 1}
+              </td>
+
+              <td>
+                ${escapeHtml(item.slot)}
+              </td>
+
+              <td>
+                ${item.yes}
+              </td>
+
+              <td>
+                ${item.no}
+              </td>
+
+              <td>
+                ${item.maybe}
+              </td>
+
+              <td>
+                ${item.score}
+              </td>
+
+              <td>
+                ${comment}
+              </td>
+            `;
+
+
+            tbody.appendChild(
+              row
+            );
+
+          }
+        );
+
+
+      section.appendChild(
+        table
+      );
+
+
+      rankingArea.appendChild(
+        section
+      );
+
+    }
+
+
+
+    // ===============================
+    // HTML安全化
+    // ===============================
+
+    function escapeHtml(
+      text
+    ) {
 
       const div =
         document.createElement(
           "div"
         );
 
+
       div.textContent =
         text;
+
 
       return div.innerHTML;
     }
