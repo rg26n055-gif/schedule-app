@@ -152,16 +152,55 @@ let eventDates = [];
       button.textContent = markFor(value);
     }
 
-    function applySimpleToCalendar(group, weekday, period, value) {
-      for (let day = START_DAY; day <= END_DAY; day++) {
-        const date = new Date(YEAR, MONTH - 1, day);
-        if (date.getDay() !== Number(weekday)) continue;
-        for (let hour = period.start; hour < period.end; hour++) {
-          const cell = document.querySelector(`.slot[data-group="${group}"][data-key="${keyFor(day, hour)}"]`);
-          if (cell) applyState(cell, value);
-        }
+    function applySimpleToCalendar(
+  group,
+  weekday,
+  period,
+  value
+) {
+
+  eventDates.forEach(dateInfo => {
+
+    const date = new Date(
+      Date.UTC(
+        dateInfo.year,
+        dateInfo.month - 1,
+        dateInfo.day
+      )
+    );
+
+    if (
+      date.getUTCDay() !== Number(weekday)
+    ) {
+      return;
+    }
+
+    for (
+      let hour = period.start;
+      hour < period.end;
+      hour++
+    ) {
+
+      const key =
+        `${dateInfo.key} ` +
+        `${String(hour).padStart(2, "0")}:00〜` +
+        `${String(hour + 1).padStart(2, "0")}:00`;
+
+      const cell =
+        document.querySelector(
+          `.slot[data-group="${group}"]` +
+          `[data-key="${key}"]`
+        );
+
+      if (cell) {
+        applyState(
+          cell,
+          value
+        );
       }
     }
+  });
+}
 
     function createGrid(group, mountId) {
       const mount = document.getElementById(mountId);
