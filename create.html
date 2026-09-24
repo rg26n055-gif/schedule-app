@@ -35,51 +35,51 @@
   <p id="status"></p>
 
   <script type="module">
-    import { db } from "./firebase.js";
+  import { db } from "./firebase.js";
 
-    import {
-      collection,
-      addDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+  import {
+    collection,
+    addDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-    const button = document.getElementById("createButton");
-    const status = document.getElementById("status");
+  const button = document.getElementById("createButton");
+  const status = document.getElementById("status");
 
-    button.addEventListener("click", async () => {
-      const title = document.getElementById("title").value.trim();
-      const startDate = document.getElementById("startDate").value;
-      const endDate = document.getElementById("endDate").value;
+  button.addEventListener("click", async () => {
+    const title = document.getElementById("title").value.trim();
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
 
-      if (!title || !startDate || !endDate) {
-        status.textContent = "全部入力してください";
-        return;
-      }
+    if (!title || !startDate || !endDate) {
+      status.textContent = "全部入力してください";
+      return;
+    }
 
-      try {
-  const docRef = await addDoc(collection(db, "events"), {
-    title,
-    startDate,
-    endDate,
-    createdAt: serverTimestamp()
+    try {
+      const docRef = await addDoc(collection(db, "events"), {
+        title,
+        startDate,
+        endDate,
+        createdAt: serverTimestamp()
+      });
+
+      const eventUrl =
+        `${window.location.origin}/index.html?event=${docRef.id}`;
+
+      status.innerHTML = `
+        作成成功！<br>
+        参加者用URL：<br>
+        <a href="${eventUrl}" target="_blank">
+          ${eventUrl}
+        </a>
+      `;
+
+    } catch (error) {
+      console.error(error);
+      status.textContent = "作成失敗";
+    }
   });
-
-  const eventUrl =
-    `${window.location.origin}/index.html?event=${docRef.id}`;
-
-  status.innerHTML = `
-    作成成功！<br>
-    参加者用URL：<br>
-    <a href="${eventUrl}" target="_blank">
-      ${eventUrl}
-    </a>
-  `;
-
-} catch (error) {
-  console.error(error);
-  status.textContent = "作成失敗";
-}
-  </script>
-
+</script>
 </body>
 </html>
