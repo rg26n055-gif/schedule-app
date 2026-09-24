@@ -63,12 +63,12 @@
   イベント情報を読み込み中…
 </p>
     <div class="intro">
-      まだ10月の予定が確定していなくても大丈夫です。<br><br>
+      まだ<span id="eventMonthRangeText"></span>の予定が確定していなくても大丈夫です。<br><br>
       まずは、<b>「普段この曜日・時間帯なら参加できそう？」</b>という感覚でざっくり回答してください。<br><br>
       <b>○ 参加できそう</b><br><b>× 絶対に無理</b><br><b>？ まだ分からない</b><br><br>
       まだ分からないところは、<b>「？」のままでOK</b>です。<br>
       曜日ごとの回答を<span id="dateRangeText"></span>の実際の日付に自動で反映します。<br><br>
-      「10月8日だけ予定がある」など、特定の日だけ違う場合は、<b>「特定の日だけ細かく修正する」</b>から変更できます。
+      「<span id="exampleDateText"></span>だけ予定がある」など、特定の日だけ違う場合は、<b>「特定の日だけ細かく修正する」</b>から変更できます。
     </div>
 
     <div class="card"><h2>名前</h2><input id="name" type="text" placeholder="例：山田 太郎"></div>
@@ -112,7 +112,7 @@ let currentEventOpen = true;
         weekdays.forEach(weekday => periods.forEach(period => { simpleState[group.id][`${weekday.id}_${period.id}`] = 'maybe'; }));
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<h2>${group.title}</h2><div class="hint">まずは曜日ごとにざっくり回答してください。<br>「？」を押すと「○」、もう一度押すと「×」、もう一度押すと「？」に戻ります。</div>${index > 0 ? '<div class="toolbar"><button type="button" class="copy-button" onclick="copyFromEnv(\'' + group.id + '\')">①と同じ回答をコピー</button></div>' : ''}<div class="simple-title">曜日ごとの参加しやすさ</div><div class="simple-wrap"><table class="simple-table"><thead><tr><th>曜日</th><th>午前<br>9〜12</th><th>午後<br>12〜17</th><th>夜<br>17〜22</th></tr></thead><tbody id="${group.id}Simple"></tbody></table></div><div class="toolbar"><button type="button" class="detail-button" onclick="toggleDetail('${group.id}', this)">特定の日だけ細かく修正する</button></div><div id="${group.id}Detail" class="detail"><div class="hint">上で設定した曜日ごとの回答が10月1日〜15日に反映されています。<br>特定の日だけ違う場合、そのマスをタップして変更してください。<br>スマホでは表を左右にスクロールできます。</div><div id="${group.id}Grid" class="grid-wrap"></div></div>`;
+        card.innerHTML = `<h2>${group.title}</h2><div class="hint">まずは曜日ごとにざっくり回答してください。<br>「？」を押すと「○」、もう一度押すと「×」、もう一度押すと「？」に戻ります。</div>${index > 0 ? '<div class="toolbar"><button type="button" class="copy-button" onclick="copyFromEnv(\'' + group.id + '\')">①と同じ回答をコピー</button></div>' : ''}<div class="simple-title">曜日ごとの参加しやすさ</div><div class="simple-wrap"><table class="simple-table"><thead><tr><th>曜日</th><th>午前<br>9〜12</th><th>午後<br>12〜17</th><th>夜<br>17〜22</th></tr></thead><tbody id="${group.id}Simple"></tbody></table></div><div class="toolbar"><button type="button" class="detail-button" onclick="toggleDetail('${group.id}', this)">特定の日だけ細かく修正する</button></div><div id="${group.id}Detail" class="detail"><div class="hint">上で設定した曜日ごとの回答が<span class="dynamic-date-range"></span>に反映されています。<br>特定の日だけ違う場合、そのマスをタップして変更してください。<br>スマホでは表を左右にスクロールできます。</div><div id="${group.id}Grid" class="grid-wrap"></div></div>`;
         root.appendChild(card);
         createSimpleTable(group.id);
         createGrid(group.id, `${group.id}Grid`);
@@ -331,6 +331,41 @@ let currentEventOpen = true;
 
   return dates;
 }
+
+function formatJapaneseDate(dateString) {
+  const [, month, day] = dateString.split("-").map(Number);
+  return `${month}月${day}日`;
+}
+
+function formatJapaneseMonthRange(startDate, endDate) {
+  const [, startMonth] = startDate.split("-").map(Number);
+  const [, endMonth] = endDate.split("-").map(Number);
+
+  return startMonth === endMonth
+    ? `${startMonth}月`
+    : `${startMonth}月〜${endMonth}月`;
+}
+
+function updateDynamicDateText(startDate, endDate) {
+  const dateRange =
+    `${formatJapaneseDate(startDate)}〜${formatJapaneseDate(endDate)}`;
+
+  document.getElementById("eventMonthRangeText").textContent =
+    formatJapaneseMonthRange(startDate, endDate);
+
+  document.getElementById("exampleDateText").textContent =
+    formatJapaneseDate(startDate);
+
+  document.getElementById("dateRangeText").textContent =
+    dateRange;
+
+  document.querySelectorAll(".dynamic-date-range").forEach(
+    element => {
+      element.textContent = dateRange;
+    }
+  );
+}
+
     async function submitForm() {
 
   const name =
@@ -440,6 +475,11 @@ let currentEventOpen = true;
     }
 
     createCards();
+
+    updateDynamicDateText(
+      event.detail.startDate,
+      event.detail.endDate
+    );
   }
 );
   </script>
