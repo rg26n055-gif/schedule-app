@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>イベント作成</title>
+</head>
+<body>
+
+  <h1>イベント作成</h1>
+
+  <label>
+    イベント名
+    <input id="title" type="text">
+  </label>
+
+  <br><br>
+
+  <label>
+    開始日
+    <input id="startDate" type="date">
+  </label>
+
+  <br><br>
+
+  <label>
+    終了日
+    <input id="endDate" type="date">
+  </label>
+
+  <br><br>
+
+  <button id="createButton">イベントを作成</button>
+
+  <p id="status"></p>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+
+    import {
+      collection,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+    const button = document.getElementById("createButton");
+    const status = document.getElementById("status");
+
+    button.addEventListener("click", async () => {
+      const title = document.getElementById("title").value.trim();
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+
+      if (!title || !startDate || !endDate) {
+        status.textContent = "全部入力してください";
+        return;
+      }
+
+      try {
+        const docRef = await addDoc(collection(db, "events"), {
+          title,
+          startDate,
+          endDate,
+          createdAt: serverTimestamp()
+        });
+
+        status.textContent = "作成成功！ID: " + docRef.id;
+
+      } catch (error) {
+        console.error(error);
+        status.textContent = "作成失敗";
+      }
+    });
+  </script>
+
+</body>
+</html>
