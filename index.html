@@ -76,10 +76,11 @@
   </div>
 
   <script>
-    const YEAR = 2026;
-    const MONTH = 10;
-    const START_DAY = 1;
-    const END_DAY = 15;
+    // const YEAR = 2026;
+// const MONTH = 10;
+// const START_DAY = 1;
+// const END_DAY = 15;
+let eventDates = [];
     const START_HOUR = 9;
     const END_HOUR = 22;
     const periods = [
@@ -176,13 +177,17 @@
         header.textContent = `${hour}〜${hour + 1}`;
         grid.appendChild(header);
       }
-      for (let day = START_DAY; day <= END_DAY; day++) {
+      eventDates.forEach(dateInfo => {
         const dateCell = document.createElement('div');
         dateCell.className = 'cell date';
-        dateCell.textContent = `10/${day}`;
+        dateCell.textContent =
+  `${dateInfo.month}/${dateInfo.day}`;
         grid.appendChild(dateCell);
         for (let hour = START_HOUR; hour < END_HOUR; hour++) {
-          const key = keyFor(day, hour);
+          const key =
+            `${dateInfo.key} ` +
+            `${String(hour).padStart(2, "0")}:00〜` +
+            `${String(hour + 1).padStart(2, "0")}:00`;
           state[group][key] = 'maybe';
           const cell = document.createElement('div');
           cell.className = 'cell slot maybe';
@@ -206,7 +211,7 @@
           });
           grid.appendChild(cell);
         }
-      }
+      });
       mount.appendChild(grid);
     }
 
@@ -311,9 +316,11 @@
     );
 
     const dates = makeDateList(
-      event.detail.startDate,
-      event.detail.endDate
-    );
+  event.detail.startDate,
+  event.detail.endDate
+);
+
+eventDates = dates;
 
     console.log(
       "生成された日付:",
