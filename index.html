@@ -51,6 +51,22 @@
     .submit { width: 100%; padding: 16px; border: none; border-radius: 12px; background: #111827; color: white; font-size: 17px; font-weight: bold; cursor: pointer; }
     .submit:disabled { opacity: .6; }
     .status { text-align: center; font-weight: bold; min-height: 25px; margin-top: 8px; }
+    .feedback-link {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .feedback-link a {
+      display: inline-block;
+      padding: 12px 18px;
+      background: #eceef3;
+      color: #111827;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    .feedback-link a:hover {
+      background: #dfe2e8;
+    }
     @media (max-width: 600px) { .wrap { padding: 14px 8px 70px; } h1 { font-size: 23px; } .card, .intro { padding: 14px; } .card h2 { font-size: 18px; } }
   </style>
 </head>
@@ -75,6 +91,15 @@
     <div class="legend"><span class="yes-label">○ 参加できそう</span><span class="no-label">× 絶対に無理</span><span class="maybe-label">？ まだ分からない</span></div>
     <div id="cards"></div>
     <div class="submit-wrap"><button id="submitButton" class="submit" onclick="submitForm()">回答を送信</button><div id="status" class="status"></div></div>
+    <div class="feedback-link">
+      <a
+        href="https://github.com/rg26n055-gif/schedule-app/discussions/1"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        💬 ご意見・改善要望はこちら
+      </a>
+    </div>
   </div>
 
   <script>
