@@ -1,0 +1,46 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>管理者統合テスト</title></head><body>
+<h1>管理者・参加者の導線テスト</h1><p>Firebaseはローカルのテストデータに置き換えています。</p><ol id="results"></ol><p id="summary">実行中…</p><iframe id="app" style="width:100%;height:850px" title="テスト対象"></iframe>
+<script type="module">
+const frame=document.querySelector('#app'), results=document.querySelector('#results');
+const event={title:'ゼミ日程調整',startDate:'2026-10-01',endDate:'2026-10-02',ownerId:'owner',isOpen:true,groups:[{id:'group1',title:'対面'},{id:'group2',title:'オンライン'}]};
+const slot='2026-10-01 09:00〜10:00';
+let passed=0,failed=0;
+const check=(value,message)=>{if(!value)throw Error(message)};
+const doc=()=>frame.contentDocument;
+const el=id=>doc().getElementById(id);
+const pause=()=>new Promise(r=>setTimeout(r,20));
+async function until(fn){for(let i=0;i<250;i++){if(fn())return;await pause();}throw Error('Timeout: '+fn);}
+function fixture(extra={}){window.testFixture={user:{uid:'owner',displayName:'テスト管理者'},events:{one:structuredClone(event),other:{...event,ownerId:'other'}},responses:{},reads:[],writes:[],batches:[],...extra};}
+let navigation=0;
+async function go(url){const target=new URL('/fixture/'+url,location.href);target.searchParams.set('testRun',++navigation);frame.src=target.href;await new Promise(r=>frame.onload=r);await pause();}
+async function test(name,fn){const li=document.createElement('li');results.append(li);try{await fn();li.textContent='PASS: '+name;passed++;}catch(e){li.textContent='FAIL: '+name+' — '+e.message;failed++;}}
+await test('未ログイン→ログイン、自分のイベントのみ表示',async()=>{
+ fixture({user:null});await go('');await until(()=>!el('loginPanel').hidden);el('loginButton').click();await until(()=>doc().querySelectorAll('.event-item').length===1);check(!el('dashboard').hidden,'Dashboard missing');
+});
+await test('期間の検証→自由な質問でイベント作成→管理・共有リンク',async()=>{
+ el('title').value='新しいイベント';el('startDate').value='2026-10-02';el('endDate').value='2026-10-01';el('questions').value='対面\nオンライン';el('createButton').click();await until(()=>el('createStatus').textContent.includes('終了日'));
+ el('endDate').value='2026-10-03';el('createButton').click();await until(()=>el('manageStatus').textContent.includes('回答者数'));check(el('participantUrl').value.endsWith('respond.html?event=created'),'Wrong share link');check(el('rankingArea').querySelectorAll('h2').length===2,'Missing groups');
+});
+await test('受付締切→再開→更新失敗時の状態維持',async()=>{
+ el('toggleOpenButton').click();await until(()=>el('openStatus').textContent==='締切済み');el('toggleOpenButton').click();await until(()=>el('openStatus').textContent==='回答受付中');window.testFixture.failUpdate=true;el('toggleOpenButton').click();await until(()=>el('manageStatus').textContent.includes('変更できません'));check(!el('toggleOpenButton').disabled,'Retry disabled');check(el('openStatus').textContent==='回答受付中','State changed on failure');window.testFixture.failUpdate=false;
+});
+await test('ログアウト時に回答と管理画面を消去',async()=>{el('logoutButton').click();await until(()=>el('dashboard').hidden);check(el('responseNames').textContent==='','Private content retained');});
+await test('新旧回答データのランキング集計',async()=>{
+ fixture({events:{legacy:{...event,groups:undefined}},responses:{legacy:[{name:'旧回答',env:{[slot]:'yes'}},{name:'新回答',answers:{env:{[slot]:'yes'}}}]}});await go('#manage=legacy');await until(()=>el('manageStatus').textContent.includes('2人'));const row=el('rankingArea').querySelector('tbody tr');check(row.textContent.includes('全員○'),'Legacy ranking incorrect');check(row.children[5].textContent.trim()==='6','Score changed');
+});
+await test('他人のイベントの管理を禁止',async()=>{fixture();await go('#manage=other');await until(()=>el('manageStatus').textContent.includes('権限'));check(el('deleteEventButton').disabled,'Delete enabled');check(testFixture.reads.every(r=>(r.ref||r)==='events'),'Unauthorized responses read');});
+await test('削除キャンセル・805回答の分割削除・親イベントは最後に削除',async()=>{
+ fixture({responses:{one:Array.from({length:805},()=>({name:'回答者'}))}});await go('#manage=one');await until(()=>el('manageStatus').textContent.includes('805人'));window.confirmDelete=false;el('deleteEventButton').click();check(testFixture.writes.length===0,'Cancelled delete wrote');window.confirmDelete=true;el('deleteEventButton').click();await until(()=>el('appStatus').textContent.includes('削除しました'));check(JSON.stringify(testFixture.batches)==='[400,400,5]','Batch sizes');check(!testFixture.events.one && testFixture.responses.one.length===0,'Remaining data');check(testFixture.writes[0].data.isOpen===false,'Not closed before delete');
+});
+await test('旧参加者URL転送・questions互換・文字列を安全に表示・回答送信',async()=>{
+ fixture({user:null,events:{one:{...event,groups:undefined,questions:[{id:'question1',title:'<img src=x onerror=alert(1)>'},{id:'question2',title:'オンライン'}]}}});await go('index.html?event=one');await until(()=>doc().querySelector('.simple-button'));check(frame.contentWindow.location.pathname.endsWith('/respond.html'),'Old URL not forwarded');check(!doc().querySelector('#cards img'),'Question title interpreted as HTML');el('name').value='参加者';doc().querySelector('#question1Simple [data-weekday="4"][data-period="morning"]').click();doc().querySelector('.copy-button').click();el('submitButton').click();await until(()=>el('submitButton').textContent==='送信済み');const response=testFixture.responses.one[0];check(response.answers.question1[slot]==='yes','Wrong date answer');check(JSON.stringify(response.answers.question1)===JSON.stringify(response.answers.question2),'Copy failed');check(Object.keys(response.answers.question1).length===26,'Missing slots');
+});
+await test('旧管理URL・作成URL・ログインURL転送',async()=>{
+ fixture({user:null});await go('admin.html?event=one');await until(()=>el('loginPanel')&&!el('loginPanel').hidden);check(frame.contentWindow.location.hash==='#manage=one','Admin route lost');el('loginButton').click();await until(()=>el('manageStatus').textContent.includes('回答者数'));await go('create.html');await until(()=>el('createForm'));check(frame.contentWindow.location.hash==='#create','Create route lost');await go('login.html');await until(()=>el('loginPanel'));
+});
+await test('締切済み・存在しない・指定なしのイベントは送信不可',async()=>{
+ fixture({user:null,events:{closed:{...event,isOpen:false}}});for(const suffix of ['?event=closed','?event=missing','']){await go('respond.html'+suffix);await until(()=>!el('eventInfo').textContent.includes('読み込み中'));check(el('submitButton').disabled,'Submit enabled for '+suffix);}
+});
+document.querySelector('#summary').textContent=`${passed} passed / ${failed} failed`;
+fixture();await go('#manage=one');
+</script></body></html>

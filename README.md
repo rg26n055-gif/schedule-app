@@ -11,7 +11,7 @@
 
 GitHub Pages:
 
-`ここに公開URLを貼る`
+https://rg26n055-gif.github.io/schedule-app/
 
 ---
 
@@ -110,72 +110,47 @@ GitHub Pages:
 
 ---
 
-## システム構成
+## 画面とURL
 
-```text
-GitHub Pages
-│
-├── login.html
-│   └── 管理者ログイン
-│
-├── create.html
-│   └── イベント作成
-│
-├── index.html
-│   └── 参加者回答
-│
-├── admin.html
-│   └── 管理・集計
-│
-├── firebase.js
-│   └── Firebase接続
-│
-├── event.js
-│   └── イベント情報取得
-│
-└── response.js
-    └── 回答保存
+- 管理者ホーム：`/schedule-app/`（`index.html`）
+- 参加者に共有するリンク：`/schedule-app/respond.html?event=イベントID`
+- 管理者ホーム内でGoogleログイン、新規作成、自分のイベント一覧、共有リンクの表示・コピー、回答者一覧、候補ランキング、受付締切・再開、削除ができます。
+- 管理画面は `#manage=イベントID`、作成フォームは `#create` で同じページ内に表示します。
+- 旧 `index.html?event=...` は参加者画面へ、旧 `admin.html?event=...` はホーム内の該当イベントへ転送します。`login.html` / `create.html` もホームへ転送する互換用ファイルとして残しています。
 
-        ↓
+## Firebaseと既存データの互換性
 
-Firebase
+Firebase設定、SDKバージョン、Google Authentication、Firestoreのコレクション構成と回答保存形式は変更していません。
 
-├── Authentication
-│   └── Googleログイン
-│
-└── Firestore
-    ├── events
-    └── responses
-    使用技術
-- HTML
-- CSS
-- JavaScript
-- Firebase Authentication
-- Cloud Firestore
-- Git
-- GitHub
-- GitHub Pages
-セキュリティ・プライバシー
-参加者の名前や回答データはGitHubには保存しません。
-回答データはCloud Firestoreに保存し、Firestore Security Rulesによってアクセスを制御しています。
-管理者のみが自分のイベントの回答を閲覧・削除できる設計としています。
-また、イベント終了後には回答データを削除できます。
-データ構造
-events
-└── eventId
-    ├── title
-    ├── startDate
-    ├── endDate
-    ├── ownerId
-    ├── isOpen
-    └── responses
-        └── responseId
-            ├── name
-            ├── env
-            ├── eng
-            ├── online
-            └── createdAt
-開発で学んだこと
+- イベント：`events/{eventId}`。`title`, `startDate`, `endDate`, `ownerId`, `isOpen`, `groups`, `createdAt` を保存します。
+- 回答：`events/{eventId}/responses/{responseId}`。`name`, `answers`, `createdAt` を保存します。
+- 質問設定は `groups` → `questions` → 旧固定3項目（`env` / `eng` / `online`）の順に読みます。
+- 集計は `answers[groupId]` と旧 `response[groupId]` の両方に対応します。質問ID・日時キー・採点方式は維持しています。
+- 削除時は先に受付を締め切り、回答を400件ずつ削除した後でイベント本体を削除します。途中失敗時は再試行できます。削除した回答は復元できません。
+
+### Security Rulesの前提
+
+デプロイ済みのSecurity Rulesはこのリポジトリには含まれていないため、この変更ではルールを更新していません。フロントの所有者チェックだけでアクセス制御を代替しないでください。
+
+- 参加者がイベント情報を読み取れること。
+- `events` の作成時はログイン済みの本人の `ownerId` を要求すること。
+- 所有者だけが自分のイベントの更新・削除と回答の閲覧・削除を行えること。
+- イベント一覧は `where("ownerId", "==", uid)` で取得します。所有者条件付きの `list` が許可されている必要があります（`get` のみ許可する既存ルールの場合は一覧取得が拒否されます）。複合インデックスは不要です。
+- 回答作成は存在する受付中イベントに限り、既存の `name` / `answers` / `createdAt` の検証を維持すること。
+
+回答データはGitHubに保存せずFirestoreに保存します。
+
+## ローカル検証
+
+Node.jsで `node tests/server.cjs` を実行し、`http://127.0.0.1:8765/tests/browser.html` をブラウザーで開きます。
+
+このページはFirebaseをメモリ内のテストデータに置き換え、ログイン状態の切替、所有者一覧、作成・期間検証、共有先、締切・再開、失敗時の状態維持、旧回答ランキング、他人のイベントの拒否、805件の回答削除、参加者回答送信、旧URL転送、締切済み・存在しないイベントを検証します。本番Firebaseへのアクセスは行いません。
+
+Playwright導入済みの環境では、サーバー起動後に `node --test tests/flows.cjs` でも同じ検証を実行できます。
+本番のGoogleログイン、デプロイ済みRulesの許可・拒否は別途実環境での確認が必要です。
+
+## 開発で学んだこと
+
 この開発を通して、
 - Git / GitHubによるバージョン管理
 - GitHub PagesによるWeb公開
@@ -206,7 +181,6 @@ AIの活用
 については、自分で考えながら設計・開発を進めています。
 今後追加したい機能
 - 回答内容の編集
-- 管理者ダッシュボード
 - 過去イベント一覧
 - イベント複製
 - QRコード生成

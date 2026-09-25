@@ -1,3 +1,4 @@
+import { eventGroups } from "./groups.js";
 import { db } from "./firebase.js";
 
 import {
@@ -11,21 +12,6 @@ const eventId = params.get("event");
 
 const eventInfo =
   document.getElementById("eventInfo");
-
-const defaultGroups = [
-  {
-    id: "env",
-    title: "環境人間キャンパスでダンス練習"
-  },
-  {
-    id: "eng",
-    title: "姫路工学キャンパスでダンス練習"
-  },
-  {
-    id: "online",
-    title: "オンラインでダンス練習"
-  }
-];
 
 async function loadEvent() {
 
@@ -66,11 +52,7 @@ window.dispatchEvent(
       startDate: data.startDate,
       endDate: data.endDate,
       isOpen: data.isOpen !== false,
-      groups: data.groups?.length
-        ? data.groups
-        : data.questions?.length
-          ? data.questions
-          : defaultGroups
+      groups: eventGroups(data)
     }
   })
 );
