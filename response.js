@@ -21,9 +21,7 @@ window.saveResponseToFirestore = async function(eventId, data) {
     ),
     {
       name: data.name,
-      env: data.env,
-      eng: data.eng,
-      online: data.online,
+      answers: data.answers,
       createdAt: serverTimestamp()
     }
   );

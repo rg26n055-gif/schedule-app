@@ -524,9 +524,11 @@
           ];
 
           const groups = (
-            eventData.questions?.length
-              ? eventData.questions
-              : defaultGroups
+            eventData.groups?.length
+              ? eventData.groups
+              : eventData.questions?.length
+                ? eventData.questions
+                : defaultGroups
           ).map(
             (question, index) => ({
               id: question.id || `question${index + 1}`,
@@ -716,6 +718,7 @@
               response => {
 
                 const groupData =
+                  response.answers?.[group] ||
                   response[group] ||
                   {};
 

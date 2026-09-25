@@ -12,7 +12,7 @@ const eventId = params.get("event");
 const eventInfo =
   document.getElementById("eventInfo");
 
-const defaultQuestions = [
+const defaultGroups = [
   {
     id: "env",
     title: "環境人間キャンパスでダンス練習"
@@ -66,9 +66,11 @@ window.dispatchEvent(
       startDate: data.startDate,
       endDate: data.endDate,
       isOpen: data.isOpen !== false,
-      questions: data.questions?.length
-        ? data.questions
-        : defaultQuestions
+      groups: data.groups?.length
+        ? data.groups
+        : data.questions?.length
+          ? data.questions
+          : defaultGroups
     }
   })
 );

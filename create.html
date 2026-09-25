@@ -30,12 +30,20 @@
 
   <br><br>
 
-  <label>
-    質問項目（1行に1つ）<br>
-    <textarea id="questions" rows="5">環境人間キャンパスでダンス練習
-姫路工学キャンパスでダンス練習
-オンラインでダンス練習</textarea>
-  </label>
+  <h2>回答項目</h2>
+
+  <p>
+    日程を分けて回答してほしい条件を設定してください。
+  </p>
+
+  <textarea
+    id="questions"
+    rows="5"
+    placeholder="例：
+対面
+オンライン
+第1会議室"
+  ></textarea>
 
   <br><br>
 
@@ -78,19 +86,25 @@
     const title = document.getElementById("title").value.trim();
     const startDate = document.getElementById("startDate").value;
     const endDate = document.getElementById("endDate").value;
-    const questionTitles = document.getElementById("questions").value
+    const groupTitles = document.getElementById("questions").value
       .split("\n")
-      .map(question => question.trim())
-      .filter(Boolean);
+      .map(title => title.trim())
+      .filter(title => title !== "");
 
-    if (!title || !startDate || !endDate || questionTitles.length === 0) {
+    if (!title || !startDate || !endDate) {
       status.textContent = "全部入力してください";
       return;
     }
 
-    const questions = questionTitles.map((question, index) => ({
-      id: `question${index + 1}`,
-      title: question
+    if (groupTitles.length === 0) {
+      status.textContent =
+        "回答項目を1つ以上入力してください。";
+      return;
+    }
+
+    const groups = groupTitles.map((title, index) => ({
+      id: `group${index + 1}`,
+      title: title
     }));
 
     try {
@@ -105,7 +119,7 @@ const docRef = await addDoc(collection(db, "events"), {
   endDate,
   ownerId: auth.currentUser.uid,
   isOpen: true,
-  questions,
+  groups,
   createdAt: serverTimestamp()
 });      const eventUrl =
   new URL(
